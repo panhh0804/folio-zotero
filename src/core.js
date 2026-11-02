@@ -99,14 +99,14 @@ var FolioCore = (() => {
     return 'rgba('+rgb.join(',')+',0.6)';
   }
   function tags(category, source, reviewed=true) {
-    return [{name:'semantic:'+category},{name:'semantic:source:'+source},...(reviewed?[{name:'semantic:reviewed:true'}]:[])];
+    return [{name:'semantic:'+category},{name:'semantic:managed:folio'},{name:'semantic:source:'+source},...(reviewed?[{name:'semantic:reviewed:true'}]:[])];
   }
-  function markdown(title, annotations, cats) {
-    const out=['# '+title,'','> Folio 语义精读笔记',''];
+  function markdown(title, annotations, cats, translations=new Map()) {
+    const out=['# '+title,''];
     for(const c of cats) {
       const group=annotations.filter(a=>a.category===c.id); if(!group.length) continue;
-      out.push('## '+c.id+' '+c.name,'');
-      for(const a of group) out.push('> '+norm(a.text),'','— p. '+a.pageLabel+' '+a.source,...(a.comment?['',a.comment]:[]),'');
+      out.push('## '+c.name,'');
+      for(const a of group) out.push('> '+norm(a.text)+' ——p'+a.pageLabel,...(translations.get(a.annotationID)?['',translations.get(a.annotationID)]:[]),...(a.comment?['',a.comment]:[]),'');
     }
     return out.join('\n');
   }
