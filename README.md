@@ -1,4 +1,4 @@
-<h1 align="center">Folio</h1>
+<h1 align="center">Folio：知页</h1>
 
 <p align="center"><strong>给论文高亮加上语义，把阅读整理成笔记。</strong></p>
 
