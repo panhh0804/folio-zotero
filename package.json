@@ -1,0 +1,1 @@
+{"name":"folio-zotero","version":"0.3.3","private":true,"description":"Semantic reading for Zotero","scripts":{"test":"node --test tests/*.test.cjs","build":"python3 scripts/build.py","check":"node --check bootstrap.js && node --check src/core.js && node --check src/translation.js && node --check src/plugin.js && node --check src/panel.js"},"engines":{"node":">=20"}}

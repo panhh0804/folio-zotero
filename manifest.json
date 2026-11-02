@@ -1,0 +1,15 @@
+{
+  "manifest_version": 2,
+  "name": "Folio",
+  "version": "0.3.3",
+  "description": "Read the argument. AI and manual semantic highlights with margin labels.",
+  "author": "Folio",
+  "applications": {
+    "zotero": {
+      "id": "folio@folio.local",
+      "strict_min_version": "10.0.7",
+      "strict_max_version": "10.0.*",
+      "update_url": "https://folio.invalid/updates.json"
+    }
+  }
+}

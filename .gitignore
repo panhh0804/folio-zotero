@@ -1,0 +1,30 @@
+# Local Zotero test profiles, libraries, logs, and verification artifacts
+.test*/
+verification/
+*.log
+.DS_Store
+__pycache__/
+*.py[cod]
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Generated packages and dependencies
+dist/
+node_modules/
+*.xpi
+*.zip
+*.sqlite
+*.sqlite-*
+
+# Machine-specific developer automation stays local
+scripts/*
+!scripts/build.py
+!scripts/package-source.py
+!scripts/audit-public.py
