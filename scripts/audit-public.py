@@ -7,7 +7,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 PUBLIC_FILES = {
-    '.gitignore', 'LICENSE', 'README.md', 'bootstrap.js', 'manifest.json',
+    '.gitignore', 'LICENSE', 'README.md', 'README.en.md', 'bootstrap.js', 'manifest.json',
     'package.json', 'scripts/audit-public.py', 'scripts/build.py',
     'scripts/package-source.py', 'src/core.js', 'src/panel.js',
     'src/plugin.js', 'src/style.css', 'src/translation.js',
