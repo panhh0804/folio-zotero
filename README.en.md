@@ -69,7 +69,7 @@ Edit the category JSON under Settings → Category configuration (`设置 → �
 
 ### Let AI suggest passages, then make the final decision
 
-Choose AI mode (`AI 自动`), select an annotation density, and click Analyze paper (`分析论文`). Core (`核心`) retains the central problem, main contribution, and decisive findings. Balanced (`均衡`) covers the main argument, key methods, and representative evidence. Comprehensive (`完整`) also retains important details, ablations, generalization findings, and applicability boundaries. Final annotation counts are capped at approximately 6%, 12%, and 22% of extracted sentences, respectively, rounded up. These are ceilings, not quotas; missing categories are never filled artificially. Folio selects important sentences, classifies them, and creates drafts. Edit, accept, or reject individual suggestions, or save the drafts you have selected.
+Choose AI mode (`AI 自动`), select an annotation density, and click Analyze paper (`分析论文`). Core (`核心`) retains the central problem, main contribution, and decisive findings. Balanced (`均衡`) covers the main argument, key methods, and representative evidence. Comprehensive (`完整`) also retains important details, ablations, generalization findings, and applicability boundaries. Folio selects important sentences, classifies them, and creates drafts. Edit, accept, or reject individual suggestions, or save the drafts you have selected.
 
 **Completing an AI analysis does not save its suggestions as final annotations. Review and save the drafts to create native Zotero annotations.**
 
