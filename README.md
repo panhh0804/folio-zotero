@@ -5,7 +5,7 @@
 <p align="center"><strong>给论文高亮加上语义，把阅读整理成笔记。</strong></p>
 
 <p align="center">
-  <a href="https://github.com/panhh0804/folio-zotero/releases"><img src="https://img.shields.io/badge/version-1.0.10-4263eb" alt="Version 1.0.10"></a>
+  <a href="https://github.com/panhh0804/folio-zotero/releases"><img src="https://img.shields.io/badge/version-1.0.11-4263eb" alt="Version 1.0.11"></a>
   <img src="https://img.shields.io/badge/Zotero-10.0.7%2B-CC2936" alt="Zotero 10.0.7 and later in the 10.0 series">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="Apache 2.0"></a>
 </p>
@@ -69,7 +69,7 @@ Folio 是一款 Zotero 语义标注插件。在 PDF 阅读器中，为关键句�
 
 ### 让 AI 先筛选，再由你确认
 
-选择「AI 自动」，设置核心、均衡或完整的标注密度，点击「分析论文」。Folio 会筛选关键句、分类并生成草稿；你可以逐条修改、接受或拒绝，也可以保存勾选的草稿。
+选择「AI 自动」，设置标注密度，点击「分析论文」。核心保留中心问题、主要贡献与决定性结论；均衡覆盖主要论证、关键方法和代表性证据；完整进一步保留重要细节、消融、泛化与适用边界。三档的标注数量上限分别约为可提取句子的 6%、12%、22%（向上取整），仅作为上限，不为凑数添加标注，也不强制补齐分类。Folio 会筛选关键句、分类并生成草稿；你可以逐条修改、接受或拒绝，也可以保存勾选的草稿。
 
 **AI 分析完成不等于正式保存。审核后的结果，才会成为 Zotero 原生标注。**
 
@@ -92,7 +92,7 @@ Folio 是一款 Zotero 语义标注插件。在 PDF 阅读器中，为关键句�
 
 ## 安装
 
-当前版本 **1.0.10**，支持清单范围为 **Zotero 10.0.7 及以上的 10.0.x 版本**。已测试环境为 macOS / Zotero 10.0.7；其他平台尚未验证。
+当前版本 **1.0.11**，支持清单范围为 **Zotero 10.0.7 及以上的 10.0.x 版本**。已测试环境为 macOS / Zotero 10.0.7；其他平台尚未验证。
 
 1. 从 [Releases](https://github.com/panhh0804/folio-zotero/releases) 获取已发布的 `.xpi` 安装包。若尚未提供发布包，可按下方步骤从源码构建。
 2. 在 Zotero 中打开「工具 → 插件」。
@@ -110,7 +110,7 @@ cd folio-zotero
 npm run verify
 ```
 
-安装包位于 `dist/Folio-1.0.10.xpi`。如需源码 ZIP，运行 `npm run package:source`。
+安装包位于 `dist/Folio-1.0.11.xpi`。如需源码 ZIP，运行 `npm run package:source`。
 
 </details>
 

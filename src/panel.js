@@ -78,7 +78,9 @@ var FolioPanel = (() => {
       const modes=el('div','folio-modes');for(const [id,name] of [['Manual','人工标注'],['AI','AI 自动']])modes.append(button(name,state.mode===id?'active':'',()=>{state.mode=id;api.persist();render();}));body.append(modes);
       if(state.mode!=='Manual') {
         const box=el('section','folio-analyze');
-        const row=el('div','folio-analyze-row');row.append(select([['core','核心'],['balanced','均衡'],['comprehensive','完整']],state.density,v=>{state.density=v;api.persist();}));
+        const row=el('div','folio-analyze-row');const densitySelect=select([['core','核心'],['balanced','均衡'],['comprehensive','完整']],state.density,v=>{state.density=v;api.persist();});densitySelect.disabled=state.busy;
+        const densityTips={core:'只保留核心问题、主要贡献和决定性结论，标注上限约为全文句子的 6%',balanced:'覆盖主要论证、关键方法与代表性证据，标注上限约为全文句子的 12%',comprehensive:'补充重要方法细节、消融、泛化及适用边界，标注上限约为全文句子的 22%'};
+        densitySelect.title=densityTips[state.density]||densityTips.balanced;for(const option of densitySelect.options)option.title=densityTips[option.value];row.append(densitySelect);
         const run=button(state.busy?'分析中…':'分析论文','folio-primary',()=>api.analyze());run.disabled=state.busy;row.append(run);box.append(row);
         if(state.busy)box.append(button('取消分析','folio-text',()=>api.cancel()));body.append(box);
       }

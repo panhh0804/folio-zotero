@@ -1,5 +1,29 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const vm=require('node:vm');const fs=require('node:fs');const C=require('../src/core.js');
 function chars(text,y=700){return [...text].map((c,i)=>({c,rect:[40+i*5,y,45+i*5,y+10],spaceAfter:false}));}
+test('density profiles have distinct rules and increasing document and candidate ceilings',()=>{
+ for(const [mode,cap,candidates] of [['core',6,18],['balanced',12,36],['comprehensive',22,66]]){
+  assert.equal(C.densityBudget(mode,100),cap);assert.equal(C.densityBudget(mode,100,true),candidates);
+  assert.equal(C.densityBudget(mode,0),0);assert.equal(C.densityBudget(mode,1),1);
+  assert.match(C.densityInstructions(mode),/ceiling, not a quota/);
+ }
+ assert.match(C.densityInstructions('core'),/Omit general background/);
+ assert.match(C.densityInstructions('balanced'),/representative evidence/);
+ assert.match(C.densityInstructions('comprehensive'),/informative ablations/);
+ assert.equal(C.densityBudget('old-setting',100),12);
+});
+test('density overflow preserves distinct categories and pages without creating or duplicating evidence',()=>{
+ const items=Array.from({length:100},(_,i)=>({id:'S'+i,text:'Evidence '+i,category:i<90?'SOLN':'LIMT',confidence:i<90?0.9:0.8,position:{pageIndex:Math.floor(i/10)}}));
+ const original=JSON.stringify(items);
+ for(const mode of ['core','balanced','comprehensive']){
+  const result=C.limitAnnotations(items,C.densityBudget(mode,100));
+  assert.equal(result.length,C.densityBudget(mode,100));assert.ok(result.some(a=>a.category==='LIMT'));
+  assert.ok(new Set(result.map(a=>a.position.pageIndex)).size>1);assert.ok(result.every(a=>items.includes(a)));
+ }
+ assert.equal(JSON.stringify(items),original);
+ assert.deepEqual(C.limitAnnotations(items.slice(0,2),22),items.slice(0,2));
+ assert.equal(C.limitAnnotations([items[0],{...items[0],text:' Evidence  0 '}],5).length,1);
+ assert.deepEqual(C.limitAnnotations(items,0),[]);
+});
 test('validates unique categories and colors',()=>{assert.equal(C.categories(C.defaults).length,6);assert.throws(()=>C.categories([...C.defaults,C.defaults[0]]));assert.throws(()=>C.categories([{...C.defaults[0],color:'red'}]));});
 test('sentence IDs point to original glyph coordinates across pages',()=>{const pages=[{chars:chars('A long scientific sentence that continues'),viewBox:[0,0,612,792]},{chars:chars('onto another page and ends here.'),viewBox:[0,0,612,792]}];const s=C.sentences(pages);assert.equal(s.length,1);assert.equal(s[0].position.pageIndex,0);assert.ok(s[0].position.nextPageRects.length);assert.ok(s[0].text.includes('onto another'));assert.match(s[0].sortIndex,/^00000\|000000\|/);});
 test('rectangles never bridge two columns',()=>{const result=C.rects([{rect:[40,50,60,60]},{rect:[65,50,70,60]},{rect:[300,50,320,60]}]);assert.deepEqual(result,[[40,50,70,60],[300,50,320,60]]);});
@@ -227,6 +251,30 @@ test('analysis always refreshes its idle button state when ending without native
  const env=pluginEnv(),states=[];let updates=0,refreshes=0;
  const s={itemID:5,config:{provider:'ollama',endpoint:'http://127.0.0.1:11434',model:'test',allowRemote:false},categories:C.defaults,drafts:[],native:[],layers:new Set(),reader:{},panel:{render(){states.push(s.busy);},refresh(){refreshes++;states.push(s.busy);},updateAnalysis(){updates++;states.push(s.busy);}}};
  await env.P._test.analyze(s);assert.equal(s.busy,false);assert.equal(s.error,true);assert.equal(updates,1);assert.equal(refreshes,1);assert.equal(states.at(-1),false);
+});
+
+test('full analysis enforces each density even when the provider ignores limits and the setting changes mid-run',async()=>{
+ for(const mode of ['core','balanced','comprehensive']){
+  const env=pluginEnv();credentialHarness(env);env.context.Cu={cloneInto:x=>x};
+  const text=Array.from({length:100},(_,i)=>'Scientific evidence number '+i+' explains a distinct experimental finding.').join(' ');
+  const page={chars:chars(text),viewBox:[0,0,612,792]},sentences=C.sentences([page]),prompts=[];
+  const s={itemID:5,density:mode,config:{provider:'ollama',endpoint:'http://127.0.0.1:11434',model:'fixture',allowRemote:false},categories:C.defaults,drafts:[],native:[],layers:new Set(),reader:{},panel:{render(){},refresh(){},updateAnalysis(){}}};
+  s.reader._internalReader={_primaryView:{_iframeWindow:{PDFViewerApplication:{pdfDocument:{numPages:1,getPageLabels:async()=>['1'],getPageData:async()=>{s.reader._internalReader={};return page;}}}}}};
+  env.context.Zotero.HTTP={request:async(_method,_url,options)=>{
+   const body=JSON.parse(options.body),prompt=body.messages[1].content;prompts.push(body.messages);
+   s.density='comprehensive'; // The active run must retain its original profile.
+   let response;
+   if(prompt.startsWith('Classify candidates')){const context=JSON.parse(prompt.slice(prompt.indexOf('\n')+1));response={annotations:context.map((a,i)=>({sentence_id:a.id,category:i%2?'RSLT':'SOLN',confidence:0.9}))};}
+   else response={sentence_ids:sentences.map(a=>a.id)};
+   return {response:{message:{content:JSON.stringify(response)}}};
+  }};
+  await env.P._test.analyze(s);
+  assert.equal(s.error,false,s.message);assert.equal(s.busy,false);
+  assert.equal(s.drafts.length,C.densityBudget(mode,sentences.length));
+  assert.equal(env.saved.length,0);assert.equal(prompts.length,3);
+  for(const messages of prompts)assert.ok(messages[0].content.includes(C.densityInstructions(mode)));
+  assert.match(prompts[2][1].content,new RegExp('Keep at most '+C.densityBudget(mode,sentences.length)));
+ }
 });
 
 test('selected-text card follows the active reader selection and clears when selection ends',()=>{

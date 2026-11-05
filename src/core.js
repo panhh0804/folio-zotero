@@ -74,6 +74,35 @@ var FolioCore = (() => {
     for(const s of items) {const n=s.text.length+40; if(size+n>budget && group.length) {out.push(group);group=[];size=0;} group.push(s);size+=n;}
     if(group.length) out.push(group); return out;
   }
+  const densityProfiles = {
+    core:{label:'核心',ratio:0.06,rule:'Keep only statements essential to reconstruct the central contribution: the specific research gap, the main novel idea or mechanism, the decisive finding, and a limitation only when it materially changes the conclusion. Omit general background, secondary methods, implementation details, routine experiments, and minor observations. Prefer one strong statement over several supporting statements.'},
+    balanced:{label:'均衡',ratio:0.12,rule:'Cover the main argument: motivation and specific problem, key insights, major method components, representative evidence, and meaningful limitations where present. Include supporting statements only when needed to understand or assess a main claim. Omit routine implementation details, repetitive experiments, and minor observations.'},
+    comprehensive:{label:'完整',ratio:0.22,rule:'Cover the main argument plus distinct supporting contributions: important method components, consequential implementation or training choices, informative ablations, quantitative comparisons, generalization findings, and explicit applicability boundaries. Retain a supporting detail only if it adds a new mechanism, evidence, condition, or caveat. Omit boilerplate, exhaustive experiment listings, and repeated claims. Comprehensive does not mean highlighting every sentence.'}
+  };
+  function densityProfile(value) {return densityProfiles[value] || densityProfiles.balanced;}
+  function densityBudget(value,count,candidates=false) {
+    const n=Math.max(0,Math.floor(Number(count)||0));
+    return Math.min(n,Math.ceil(n*densityProfile(value).ratio*(candidates?3:1)));
+  }
+  function densityInstructions(value) {
+    const p=densityProfile(value);
+    return 'Annotation density: '+p.label+'. '+p.rule+' Approximate upper bound: '+Math.round(p.ratio*100)+'% of supplied document sentences in the final annotations. This is a ceiling, not a quota: return fewer or none when evidence is weak. Do not invent missing categories or force equal category counts. Judge semantic importance, not keywords or section titles. Preserve distinct evidence across the paper while merging repeated claims.';
+  }
+  function limitAnnotations(items,limit) {
+    // Only prune model-selected evidence; never manufacture annotations to fill a budget.
+    const unique=[],seen=new Set();
+    for(const a of items){const key=norm(a.text);if(!seen.has(key)){seen.add(key);unique.push(a);}}
+    const cap=Math.max(0,Math.floor(limit));if(unique.length<=cap)return unique;
+    const remaining=unique.map((a,i)=>({a,i})),chosen=[],categories=new Map(),pages=new Map();
+    while(chosen.length<cap&&remaining.length){
+      remaining.sort((x,y)=>{
+        const score=x=>(categories.get(x.a.category)||0)*2+(pages.get(x.a.position?.pageIndex)||0);
+        return score(x)-score(y)||(y.a.confidence??0)-(x.a.confidence??0)||x.i-y.i;
+      });
+      const x=remaining.shift();chosen.push(x);categories.set(x.a.category,(categories.get(x.a.category)||0)+1);pages.set(x.a.position?.pageIndex,(pages.get(x.a.position?.pageIndex)||0)+1);
+    }
+    return chosen.sort((a,b)=>a.i-b.i).map(x=>x.a);
+  }
   function parseJSON(text) {
     const clean = String(text).trim().replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'');
     try {return JSON.parse(clean);} catch {throw Error('模型返回的内容不是有效 JSON，请换用支持 JSON 的模型后重试');}
@@ -110,6 +139,6 @@ var FolioCore = (() => {
     }
     return out.join('\n');
   }
-  return {defaults,categories,norm,fingerprint,rects,sentences,chunks,parseJSON,align,labelColor,labelBorderColor,tags,markdown};
+  return {defaults,categories,norm,fingerprint,rects,sentences,chunks,densityProfile,densityBudget,densityInstructions,limitAnnotations,parseJSON,align,labelColor,labelBorderColor,tags,markdown};
 })();
 if(typeof module !== 'undefined') module.exports = FolioCore;

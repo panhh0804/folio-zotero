@@ -5,7 +5,7 @@
 <p align="center"><strong>Give your highlights meaning. Turn your reading into structured notes.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/panhh0804/folio-zotero/releases"><img src="https://img.shields.io/badge/version-1.0.10-4263eb" alt="Version 1.0.10"></a>
+  <a href="https://github.com/panhh0804/folio-zotero/releases"><img src="https://img.shields.io/badge/version-1.0.11-4263eb" alt="Version 1.0.11"></a>
   <img src="https://img.shields.io/badge/Zotero-10.0.7%2B-CC2936" alt="Zotero 10.0.7 and later in the 10.0 series">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="Apache 2.0"></a>
 </p>
@@ -69,7 +69,7 @@ Edit the category JSON under Settings → Category configuration (`设置 → �
 
 ### Let AI suggest passages, then make the final decision
 
-Choose AI mode (`AI 自动`), select an annotation density—Core (`核心`), Balanced (`均衡`), or Comprehensive (`完整`)—and click Analyze paper (`分析论文`). Folio selects important sentences, classifies them, and creates drafts. Edit, accept, or reject individual suggestions, or save the drafts you have selected.
+Choose AI mode (`AI 自动`), select an annotation density, and click Analyze paper (`分析论文`). Core (`核心`) retains the central problem, main contribution, and decisive findings. Balanced (`均衡`) covers the main argument, key methods, and representative evidence. Comprehensive (`完整`) also retains important details, ablations, generalization findings, and applicability boundaries. Final annotation counts are capped at approximately 6%, 12%, and 22% of extracted sentences, respectively, rounded up. These are ceilings, not quotas; missing categories are never filled artificially. Folio selects important sentences, classifies them, and creates drafts. Edit, accept, or reject individual suggestions, or save the drafts you have selected.
 
 **Completing an AI analysis does not save its suggestions as final annotations. Review and save the drafts to create native Zotero annotations.**
 
@@ -92,7 +92,7 @@ Export includes translations that have already been generated. It does not make 
 
 ## Installation
 
-Current version: **1.0.10**. The plugin manifest supports **Zotero 10.0.7 and later releases in the 10.0.x series**. Tested on macOS with Zotero 10.0.7; other platforms have not been verified.
+Current version: **1.0.11**. The plugin manifest supports **Zotero 10.0.7 and later releases in the 10.0.x series**. Tested on macOS with Zotero 10.0.7; other platforms have not been verified.
 
 1. Download a published `.xpi` from [Releases](https://github.com/panhh0804/folio-zotero/releases). If no release package is available yet, build from source using the instructions below.
 2. In Zotero, open **Tools → Plugins**.
@@ -110,7 +110,7 @@ cd folio-zotero
 npm run verify
 ```
 
-The installation package is written to `dist/Folio-1.0.10.xpi`. Run `npm run package:source` if you also need a source ZIP.
+The installation package is written to `dist/Folio-1.0.11.xpi`. Run `npm run package:source` if you also need a source ZIP.
 
 </details>
 
