@@ -68,12 +68,12 @@ Margin labels follow the positions of the original passages and scale with the p
 
 Click Customize annotations (`自定义标注`) in the category bar of either Manual annotation (`人工标注`) or AI automatic (`AI 自动`) mode. Edit categories through a visual form without writing JSON. Both modes share the same configuration across PDFs, and settings are retained after restart.
 
-- **Add categories:** go beyond the six defaults with your own labels, such as “To verify” or “Reusable method.”
+- **Add categories:** go beyond the six defaults with your own reading labels.
 - **Choose names and colors:** use the color picker or enter a HEX value. Colors are not limited to Zotero’s default palette.
 - **Guide AI classification:** describe what belongs in each category; subsequent AI analyses use your saved definitions.
 - **Delete categories:** remove any category while keeping at least one. Click Save (`保存`) to apply your edits, or Back (`返回`) to discard unsaved changes.
 
-<p align="center"><img src="docs/media/category-settings.png" width="440" alt="Folio visual category editor with display names, note headings, colors, definitions, and category deletion"></p>
+<p align="center"><img src="docs/media/category-settings.png" width="300" alt="Folio visual category editor with display names, note headings, colors, definitions, and category deletion"></p>
 
 <details>
 <summary>Adding a category, choosing colors, and understanding the fields</summary>
