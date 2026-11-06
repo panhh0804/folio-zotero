@@ -88,11 +88,13 @@ Folio 是一款 Zotero 语义标注插件。在 PDF 阅读器中，为关键句�
 | 颜色 | 取色器或 `#RRGGBB` 色号；各分类使用不同颜色 |
 | 分类含义 | 说明哪些句子属于此类，也作为 AI 分类依据 |
 
-<p align="center"><img src="docs/media/custom-annotation.png" width="440" alt="新增自定义分类，填写标记、标注名称、笔记标题、HEX 颜色和分类含义"></p>
-
 点击颜色方块打开系统调色盘，也可直接输入 HEX 色号。
 
-<p align="center"><img src="docs/media/color-picker.png" width="760" alt="在 Folio 中使用 macOS 系统调色盘选择自定义高亮颜色"></p>
+<p align="center">
+  <img src="docs/media/custom-annotation.png" width="260" alt="新增自定义分类，填写标记、标注名称、笔记标题、HEX 颜色和分类含义">
+  &nbsp;&nbsp;
+  <img src="docs/media/color-picker.png" width="300" alt="在 Folio 中使用 macOS 系统调色盘选择自定义高亮颜色">
+</p>
 
 修改颜色后，新高亮使用新颜色，已有原文高亮保留原色，页边标签使用当前分类颜色。
 

@@ -88,11 +88,13 @@ Click Add annotation (`新增标注`) at the bottom, fill in the new category, a
 | Color (`颜色`) | Choose with the picker or enter a `#RRGGBB` value; each category uses a different color |
 | Definition (`分类含义`) | Describe which passages belong in this category; also used for AI classification |
 
-<p align="center"><img src="docs/media/custom-annotation.png" width="440" alt="Adding a custom category with an identifier, display name, note heading, HEX color, and definition"></p>
-
 Click the color swatch to open the system color picker, or enter a HEX value directly.
 
-<p align="center"><img src="docs/media/color-picker.png" width="760" alt="Choosing a custom highlight color with the macOS system color picker in Folio"></p>
+<p align="center">
+  <img src="docs/media/custom-annotation.png" width="260" alt="Adding a custom category with an identifier, display name, note heading, HEX color, and definition">
+  &nbsp;&nbsp;
+  <img src="docs/media/color-picker.png" width="300" alt="Choosing a custom highlight color with the macOS system color picker in Folio">
+</p>
 
 New highlights use an updated category color. Existing native highlights keep their original color, while margin labels use the current category color.
 
