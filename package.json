@@ -1,6 +1,6 @@
 {
   "name": "folio-zotero",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "private": true,
   "description": "Semantic annotations and structured reading notes for Zotero",
   "scripts": {

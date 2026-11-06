@@ -35,6 +35,43 @@ test('notes group original text by category and preserve comments',()=>{const md
 function pluginEnv(){let saved=[];const attachment={id:5,libraryID:1,isEditable:()=>true,getAnnotations:()=>saved};const prefs=new Map();const context={FolioCore:C,URL,console,Intl,Zotero:{Prefs:{get:k=>prefs.get(k),set:(k,v)=>prefs.set(k,v)},Items:{get:id=>id===5?attachment:saved.find(a=>a.id===id),getByLibraryAndKey:(_library,key)=>saved.find(a=>a.key===key)},DataObjectUtilities:{generateKey:()=> 'KEY'+saved.length},Annotations:{saveFromJSON:async(attachment,a)=>{if(!/^#[a-f0-9]{6}$/.test(a.color))throw Error('Native Zotero requires lowercase HEX');let tags=(a.tags||[]).map(t=>t.name);const item={id:100+saved.length,key:a.key,parentID:5,annotationType:a.type,annotationText:a.text,annotationColor:a.color,annotationComment:a.comment,annotationPageLabel:a.pageLabel,annotationSortIndex:a.sortIndex,annotationPosition:JSON.stringify(a.position),getTags:()=>tags.map(tag=>({tag})),addTag:tag=>{if(!tags.includes(tag))tags.push(tag);},removeTag:tag=>{tags=tags.filter(t=>t!==tag);},setTags:values=>{tags=values.map(t=>t.tag);},isEditable:()=>true,saveTx:async()=>{},save:async()=>{},erase:async()=>{saved.splice(saved.indexOf(item),1);}};saved.push(item);return item;}},logError:()=>{}}};context.Zotero.Item=function(){let tags=[];const item={loadPrimaryData:async()=>{},getTags:()=>tags.map(t=>({...t})),setTags:values=>{tags=values.map(t=>({...t}));},addTag:(tag,type=0)=>{if(!tags.some(t=>t.tag===tag))tags.push({tag,type});},removeTag:tag=>{tags=tags.filter(t=>t.tag!==tag);},isEditable:()=>true,addRelation(){},save:async()=>{if(!saved.includes(item)){item.id=Math.max(99,...saved.map(a=>a.id))+1;saved.push(item);}},erase:async()=>{saved.splice(saved.indexOf(item),1);}};item.saveTx=item.save;return item;};vm.createContext(context);vm.runInContext(fs.readFileSync(require.resolve('../src/plugin.js'),'utf8'),context);return {P:context.FolioPlugin,saved,attachment,context};}
 test('cloud requires explicit opt-in; remote HTTP and credential URLs are rejected',()=>{const {P}=pluginEnv();const c={endpoint:'https://example.com/v1',model:'test',provider:'compatible',allowRemote:false};assert.throws(()=>P.configURL(c));assert.equal(P.configURL({...c,allowRemote:true}),'https://example.com/v1');assert.throws(()=>P.configURL({...c,endpoint:'http://example.com',allowRemote:true}));assert.throws(()=>P.configURL({...c,endpoint:'https://user:password@example.com',allowRemote:true}));assert.equal(P.configURL({...c,endpoint:'http://127.0.0.1:11434'}),'http://127.0.0.1:11434');});
 test('native save is idempotent and never overwrites an existing manual highlight',async()=>{const {P,saved}=pluginEnv();const s={itemID:5,categories:C.defaults};const a={text:'Original quote',category:'SOLN',source:'AI',position:{pageIndex:0,rects:[[10,10,20,20]]},pageLabel:'1'};const first=await P._test.save(s,a);const second=await P._test.save(s,{...a,category:'PROB'});assert.equal(saved.length,1);assert.equal(first.duplicate,false);assert.equal(second.duplicate,true);});
+test('manual custom categories save arbitrary HEX colors, remain identifiable, and export their own names',async()=>{
+ const env=pluginEnv();const ordinary=seedHighlight(env,{color:'#38a6bc',text:'Ordinary evidence'});
+ const custom={id:'CHECK',name:'待验证',label:'待确认',color:'#38A6BC',definition:'需要进一步核实的结论'};
+ const s={itemID:5,categories:C.categories([...C.defaults,custom])};
+ await env.P._test.save(s,{text:'Evidence to verify',category:'CHECK',source:'Manual',position:{pageIndex:0,rects:[[10,40,80,50]]},pageLabel:'1',comment:'My comment'});
+ const item=env.saved.at(-1);assert.equal(item.annotationColor,'#38a6bc');assert.ok(item.getTags().some(t=>t.tag==='semantic:CHECK'));
+ const annotations=env.P._test.nativeAnnotations(s);assert.equal(annotations.length,1);assert.equal(annotations[0].category,'CHECK');
+ const md=C.markdown('Paper',annotations,s.categories);assert.match(md,/## 待验证/);assert.match(md,/My comment/);
+ assert.equal(ordinary.annotationColor,'#38a6bc');assert.equal(ordinary.getTags().length,0);
+});
+
+test('category edits persist globally, refresh open panels, survive restart, and reject invalid or busy changes',async()=>{
+ const env=pluginEnv(),h=attachNotifierHarness(env);credentialHarness(env);const actions=new Map(),refreshes=new Map();
+ env.context.FolioPanel.mount=(_doc,s,api)=>{actions.set(s.itemID,api);return {root:{isConnected:true,hidden:true},render(){},refresh(){refreshes.set(s.itemID,(refreshes.get(s.itemID)||0)+1);},attach(){},destroy(){}};};
+ await env.P.start('file:///fixture/');const first=env.P._test.session(h.reader,{},false),second=env.P._test.session({itemID:6,_iframeWindow:{document:{}}},{},false);
+ const changed=C.defaults.map(c=>({...c}));changed[0].label='研究价值';changed[0].name='Research value';changed[0].color='#38A6BC';
+ await actions.get(5).categories(changed);
+ assert.equal(first.categories[0].label,'研究价值');assert.equal(second.categories[0].color,'#38A6BC');assert.ok(refreshes.get(5)>0);assert.ok(refreshes.get(6)>0);
+ const stored=env.context.Zotero.Prefs.get('extensions.folio.categories');
+ await assert.rejects(actions.get(5).categories([...changed,changed[0]]));assert.equal(env.context.Zotero.Prefs.get('extensions.folio.categories'),stored);
+ second.busy=true;await assert.rejects(actions.get(5).categories(C.defaults),/等待/);second.busy=false;assert.equal(env.context.Zotero.Prefs.get('extensions.folio.categories'),stored);
+ env.P.stop();await env.P.start('file:///fixture/');const reopened=env.P._test.session(h.reader,{},false);assert.equal(reopened.categories[0].name,'Research value');assert.equal(reopened.categories[0].color,'#38A6BC');env.P.stop();
+});
+
+test('deleting a saved category preserves native highlights, comments and tags, and re-adding its ID restores association',async()=>{
+ const env=pluginEnv(),h=attachNotifierHarness(env);credentialHarness(env);let api;
+ env.context.FolioPanel.mount=(_doc,_s,actions)=>{api=actions;return {root:{isConnected:true,hidden:true},render(){},refresh(){},attach(){},destroy(){}};};
+ const custom={id:'CHECK',name:'待验证',label:'待确认',color:'#38A6BC',definition:'需要核实的结论'};
+ await env.P.start('file:///fixture/');const s=env.P._test.session(h.reader,{},false);await api.categories([...C.defaults,custom]);
+ await env.P._test.save(s,{text:'Evidence to verify',category:'CHECK',source:'Manual',comment:'Keep my comment',position:{pageIndex:0,rects:[[10,40,80,50]]},pageLabel:'1'});
+ const item=env.saved[0],before={color:item.annotationColor,comment:item.annotationComment,tags:item.getTags(),position:item.annotationPosition};
+ await api.categories(C.defaults);assert.equal(env.P._test.nativeAnnotations(s).length,0);assert.equal(env.saved.length,1);
+ assert.deepEqual({color:item.annotationColor,comment:item.annotationComment,tags:item.getTags(),position:item.annotationPosition},before);
+ assert.equal(JSON.parse(env.context.Zotero.Prefs.get('extensions.folio.categories')).some(c=>c.id==='CHECK'),false);
+ const stored=env.context.Zotero.Prefs.get('extensions.folio.categories');await assert.rejects(api.categories([]),/至少保留/);assert.equal(env.context.Zotero.Prefs.get('extensions.folio.categories'),stored);
+ await api.categories([...C.defaults,custom]);assert.equal(env.P._test.nativeAnnotations(s)[0].category,'CHECK');assert.equal(env.saved.length,1);env.P.stop();
+});
 test('failure during batch apply retains only unsaved drafts for retry',async()=>{const {P,attachment,saved}=pluginEnv();let n=0;const original=attachment.isEditable;attachment.isEditable=()=>++n<2;const a={text:'Quote one',category:'SOLN',source:'AI',position:{pageIndex:0,rects:[[10,10,20,20]]},pageLabel:'1'};const b={...a,text:'Quote two'};const s={itemID:5,categories:C.defaults,drafts:[a,b],layers:new Set(),reader:{},panel:{render(){},filter(){return 'all';}},busBindings:[]};await assert.rejects(P._test.apply(s,[a,b]));assert.equal(saved.length,1);assert.equal(s.drafts.length,1);assert.equal(s.drafts[0].text,'Quote two');attachment.isEditable=original;});
 
 function seedHighlight(env,{color='#ffd400',tags=[],text='A plain native highlight.',rects=[[10,10,80,20]]}={}){

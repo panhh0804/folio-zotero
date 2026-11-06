@@ -188,14 +188,14 @@ var FolioPlugin = (() => {
       config:(c,key)=>configure(s,c,key),
       clearKey:async()=>{await storeKey(s.config,'');for(const current of sessions.values())if(credentialRealm(current.config)===credentialRealm(s.config))current.hasAPIKey=false;},
       testModel:async()=>{const result=await request(s,[{role:'system',content:'Return only JSON: {"ok":true}.'},{role:'user',content:'Test the connection. Return JSON.'}]);if(result.ok!==true)throw Error('接口已响应，但未返回预期的 JSON，请检查模型配置');message(s,'连接成功');},
-      categories:async cats=>{s.categories=cats;pref('categories',cats);for(const other of sessions.values()){other.categories=cats;refresh(other);}},
+      categories:async values=>{if([...sessions.values()].some(other=>other.busy||other.saving||other.removing))throw Error('请等待分析或标注操作完成后再修改分类');const cats=FolioCore.categories(values);pref('categories',cats);for(const other of sessions.values()){other.categories=cats;refresh(other);other.panel?.refresh();}},
       export:options=>exportNotes(s,options),exportCategories:()=>saveFile(s,'folio-categories.json',JSON.stringify(s.categories,null,2))
     };
     s.panel=FolioPanel.mount(doc,s,api,cssText);setPanelVisible(s,panelVisibility.get(s.itemID)??visible);watchSelection(s);refresh(s);return s;
   }
   function injectToolbar({reader,doc,append}) {
     if(reader.type!=='pdf' && reader._type!=='pdf' && !Zotero.Items.get(reader.itemID)?.isPDFAttachment())return;
-    const b=doc.createElement('button');b.textContent='Folio';b.title='Folio 1.0.10 语义阅读';b.style.cssText='box-sizing:border-box;align-self:center;height:24px;min-height:0;padding:1px 8px;border:1px solid var(--color-border,#ccc);border-radius:4px;color:var(--fill-primary,#222);background:var(--material-button,#fff);font:13px/18px -apple-system,BlinkMacSystemFont,sans-serif;margin:3px 6px;cursor:pointer;flex-shrink:0';
+    const b=doc.createElement('button');b.textContent='Folio';b.title='Folio 语义阅读';b.style.cssText='box-sizing:border-box;align-self:center;height:24px;min-height:0;padding:1px 8px;border:1px solid var(--color-border,#ccc);border-radius:4px;color:var(--fill-primary,#222);background:var(--material-button,#fff);font:13px/18px -apple-system,BlinkMacSystemFont,sans-serif;margin:3px 6px;cursor:pointer;flex-shrink:0';
     b.className='folio-toolbar';session(reader,doc,false);
     // First click opens; subsequent clicks toggle without remounting.
     b.onclick=()=>{const s=session(reader,doc,false);setPanelVisible(s,!s.panelVisible);};append(b);

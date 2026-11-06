@@ -17,6 +17,7 @@ PUBLIC_FILES = {
     'docs/media/overview.png', 'docs/media/margin-labels.png',
     'docs/media/export-notes.png', 'docs/media/model-settings.png',
     'docs/media/category-settings.png', 'docs/media/manual-annotation.gif',
+    'docs/media/custom-annotation.png', 'docs/media/color-picker.png',
     'docs/media/ai-review.gif',
 }
 PATTERNS = {

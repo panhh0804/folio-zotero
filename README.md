@@ -5,7 +5,7 @@
 <p align="center"><strong>给论文高亮加上语义，把阅读整理成笔记。</strong></p>
 
 <p align="center">
-  <a href="https://github.com/panhh0804/folio-zotero/releases"><img src="https://img.shields.io/badge/version-1.0.11-4263eb" alt="Version 1.0.11"></a>
+  <a href="https://github.com/panhh0804/folio-zotero/releases"><img src="https://img.shields.io/badge/version-1.0.12-4263eb" alt="Version 1.0.12"></a>
   <img src="https://img.shields.io/badge/Zotero-10.0.7%2B-CC2936" alt="Zotero 10.0.7 and later in the 10.0 series">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="Apache 2.0"></a>
 </p>
@@ -31,6 +31,7 @@ Folio 是一款 Zotero 语义标注插件。在 PDF 阅读器中，为关键句�
 | 记得划过，却忘了这句话为什么重要 | 用六类语义标记区分背景、问题、方法与结论 |
 | 翻页或切换高亮后，还想看到文章结构 | 页边标签持续显示，并随 PDF 页面缩放 |
 | 想让 AI 帮忙，但仍要自己判断 | AI 先生成草稿，支持改分类、接受、拒绝和批量保存 |
+| 希望按自己的阅读方法分类 | 自定义标记、名称、颜色与分类含义，人工和 AI 模式共用 |
 | 阅读时顺手记下自己的理解 | 在标注卡片中添加评论，自动保存 |
 | 阅读英文时需要翻译 | 与 Translate for Zotero 共用选词弹窗，也可在卡片内按需翻译 |
 | 读完后需要一份能复用的笔记 | 按语义分类导出 Markdown，保留页码、评论和可选译文 |
@@ -43,7 +44,7 @@ Folio 是一款 Zotero 语义标注插件。在 PDF 阅读器中，为关键句�
 
 ![选择文本并使用 Folio 分类按钮进行人工标注](docs/media/manual-annotation.gif)
 
-默认提供六类标签，也可以按自己的阅读方法调整名称、颜色和分类定义。
+默认提供六类标签，也可以新增自己的分类，调整名称、颜色和分类含义。
 
 | 标签 | 语义 | 关注什么 |
 | --- | --- | --- |
@@ -55,15 +56,49 @@ Folio 是一款 Zotero 语义标注插件。在 PDF 阅读器中，为关键句�
 | 🟣 **LIMT** | Limitation / 研究局限 | 有哪些限制，适用于什么边界 |
 
 <details>
-<summary>查看页边标签近景与分类配置</summary>
+<summary>查看页边标签近景</summary>
 
 页边标签与原文位置关联，随页面缩放。普通颜色高亮与语义分类默认分开；只有明确选择分类，才成为 Folio 标注。
 
 <p align="center"><img src="docs/media/margin-labels.png" width="760" alt="双栏论文中的语义高亮与持续显示的页边标签"></p>
 
-在「设置 → 分类配置」中编辑分类 JSON，支持导入、导出和恢复默认配置。
+</details>
 
-<p align="center"><img src="docs/media/category-settings.png" width="440" alt="Folio 分类配置编辑、应用、导出和恢复默认"></p>
+### 按自己的阅读方法，自定义标注
+
+在「人工标注」或「AI 自动」的分类栏点击「自定义标注」，直接编辑分类，无需编写 JSON。两种模式共用一套配置，所有 PDF 共享，重启后仍然保留。
+
+- **新增分类**：除了默认六类，也可以添加“待确认”“可复用方法”等自己的阅读标记。
+- **自定义名称与颜色**：用取色器选择颜色，或输入 HEX 色号，不限于 Zotero 默认调色板。
+- **定义 AI 的分类依据**：填写分类含义，后续 AI 分析会使用保存后的定义。
+- **删除分类**：每一类均可删除，至少保留一类；编辑完成后点击「保存」生效，点击「返回」则放弃未保存的修改。
+
+<p align="center"><img src="docs/media/category-settings.png" width="440" alt="Folio 可视化分类编辑器，可修改标注名称、笔记标题、颜色及分类含义，并删除分类"></p>
+
+<details>
+<summary>新增分类、选色与字段说明</summary>
+
+点击底部「新增标注」，填写新分类后保存；新标记会出现在选词弹窗、分类栏与页边标签中。
+
+| 字段 | 用途 |
+| --- | --- |
+| 标记 | 分类按钮和页边标签中的缩写；新分类可自行填写，已有标记保持固定以关联旧标注 |
+| 标注名称 | 面板中显示的分类名称 |
+| 笔记标题 | 导出 Markdown 时使用的分类标题 |
+| 颜色 | 取色器或 `#RRGGBB` 色号；各分类使用不同颜色 |
+| 分类含义 | 说明哪些句子属于此类，也作为 AI 分类依据 |
+
+<p align="center"><img src="docs/media/custom-annotation.png" width="440" alt="新增自定义分类，填写标记、标注名称、笔记标题、HEX 颜色和分类含义"></p>
+
+点击颜色方块打开系统调色盘，也可直接输入 HEX 色号。
+
+<p align="center"><img src="docs/media/color-picker.png" width="760" alt="在 Folio 中使用 macOS 系统调色盘选择自定义高亮颜色"></p>
+
+修改颜色后，新高亮使用新颜色，已有原文高亮保留原色，页边标签使用当前分类颜色。
+
+「删除分类」会隐藏对应分类按钮、页边标签及该类草稿，保留已有原文高亮、评论和关联记录；重新添加相同标记，可恢复关联。它与卡片中的「移除标注」操作不同。
+
+需要导入、导出或恢复默认分类时，仍可使用「设置 → 分类配置」中的高级配置入口。
 
 </details>
 
@@ -81,7 +116,7 @@ Folio 是一款 Zotero 语义标注插件。在 PDF 阅读器中，为关键句�
 
 点击「导出笔记」，生成 `阅读笔记-论文标题.md`：
 
-- 按 Motivation、Problem、Insight、Solution、Results、Limitation 分组。
+- 按各分类的「笔记标题」分组；默认使用 Motivation、Problem、Insight、Solution、Results、Limitation，也支持自定义标题。
 - 原文后附页码，格式为 `原文 ——p2`。
 - 评论随对应原文导出。
 - 勾选「导出译文」后，可导出全部已生成译文，或只附上指定卡片的译文。
@@ -92,7 +127,7 @@ Folio 是一款 Zotero 语义标注插件。在 PDF 阅读器中，为关键句�
 
 ## 安装
 
-当前版本 **1.0.11**，支持清单范围为 **Zotero 10.0.7 及以上的 10.0.x 版本**。已测试环境为 macOS / Zotero 10.0.7；其他平台尚未验证。
+当前版本 **1.0.12**，支持清单范围为 **Zotero 10.0.7 及以上的 10.0.x 版本**。已测试环境为 macOS / Zotero 10.0.7；其他平台尚未验证。
 
 1. 从 [Releases](https://github.com/panhh0804/folio-zotero/releases) 获取已发布的 `.xpi` 安装包。若尚未提供发布包，可按下方步骤从源码构建。
 2. 在 Zotero 中打开「工具 → 插件」。
@@ -110,7 +145,7 @@ cd folio-zotero
 npm run verify
 ```
 
-安装包位于 `dist/Folio-1.0.11.xpi`。如需源码 ZIP，运行 `npm run package:source`。
+安装包位于 `dist/Folio-1.0.12.xpi`。如需源码 ZIP，运行 `npm run package:source`。
 
 </details>
 

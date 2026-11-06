@@ -5,7 +5,7 @@
 <p align="center"><strong>Give your highlights meaning. Turn your reading into structured notes.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/panhh0804/folio-zotero/releases"><img src="https://img.shields.io/badge/version-1.0.11-4263eb" alt="Version 1.0.11"></a>
+  <a href="https://github.com/panhh0804/folio-zotero/releases"><img src="https://img.shields.io/badge/version-1.0.12-4263eb" alt="Version 1.0.12"></a>
   <img src="https://img.shields.io/badge/Zotero-10.0.7%2B-CC2936" alt="Zotero 10.0.7 and later in the 10.0 series">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="Apache 2.0"></a>
 </p>
@@ -31,6 +31,7 @@ Annotate passages yourself, or let AI suggest important sentences for you to rev
 | Remember why a highlighted sentence matters | Six semantic categories distinguish background, problems, methods, and conclusions |
 | Keep the paper's structure visible as you read | Margin labels remain visible and scale with the PDF page |
 | Use AI without giving up your own judgment | Review drafts, change categories, accept or reject suggestions, and save selected results |
+| Use your own reading framework | Customize category identifiers, names, colors, and definitions across manual and AI modes |
 | Record your interpretation alongside the evidence | Add automatically saved comments to annotation cards |
 | Translate passages when you need to | Share the selection popup with Translate for Zotero, or translate individual cards on demand |
 | Reuse your reading notes afterward | Export Markdown grouped by category, with page references, comments, and optional translations |
@@ -55,15 +56,49 @@ Six categories are provided by default. You can customize their names, colors, a
 | 🟣 **LIMT** | Limitation | Limitations, assumptions, and boundaries of applicability |
 
 <details>
-<summary>A closer look at margin labels and custom categories</summary>
+<summary>A closer look at margin labels</summary>
 
 Margin labels follow the positions of the original passages and scale with the page. Ordinary colored highlights and semantic categories are separate by default: a highlight becomes a Folio annotation when you explicitly assign a category.
 
 <p align="center"><img src="docs/media/margin-labels.png" width="760" alt="Semantic highlights and persistent margin labels in a two-column paper"></p>
 
-Edit the category JSON under Settings → Category configuration (`设置 → 分类配置`). You can import or export your configuration and restore the defaults.
+</details>
 
-<p align="center"><img src="docs/media/category-settings.png" width="440" alt="Editing, applying, exporting, and resetting Folio categories"></p>
+### Customize annotations for the way you read
+
+Click Customize annotations (`自定义标注`) in the category bar of either Manual annotation (`人工标注`) or AI automatic (`AI 自动`) mode. Edit categories through a visual form without writing JSON. Both modes share the same configuration across PDFs, and settings are retained after restart.
+
+- **Add categories:** go beyond the six defaults with your own labels, such as “To verify” or “Reusable method.”
+- **Choose names and colors:** use the color picker or enter a HEX value. Colors are not limited to Zotero’s default palette.
+- **Guide AI classification:** describe what belongs in each category; subsequent AI analyses use your saved definitions.
+- **Delete categories:** remove any category while keeping at least one. Click Save (`保存`) to apply your edits, or Back (`返回`) to discard unsaved changes.
+
+<p align="center"><img src="docs/media/category-settings.png" width="440" alt="Folio visual category editor with display names, note headings, colors, definitions, and category deletion"></p>
+
+<details>
+<summary>Adding a category, choosing colors, and understanding the fields</summary>
+
+Click Add annotation (`新增标注`) at the bottom, fill in the new category, and save. Its identifier will appear in the selection popup, category bar, and margin labels.
+
+| Field | Purpose |
+| --- | --- |
+| Identifier (`标记`) | The abbreviation on category buttons and margin labels; choose one for a new category. Saved identifiers stay fixed to preserve existing annotation links. |
+| Display name (`标注名称`) | The category name shown in the panel |
+| Note heading (`笔记标题`) | The category heading used in Markdown exports |
+| Color (`颜色`) | Choose with the picker or enter a `#RRGGBB` value; each category uses a different color |
+| Definition (`分类含义`) | Describe which passages belong in this category; also used for AI classification |
+
+<p align="center"><img src="docs/media/custom-annotation.png" width="440" alt="Adding a custom category with an identifier, display name, note heading, HEX color, and definition"></p>
+
+Click the color swatch to open the system color picker, or enter a HEX value directly.
+
+<p align="center"><img src="docs/media/color-picker.png" width="760" alt="Choosing a custom highlight color with the macOS system color picker in Folio"></p>
+
+New highlights use an updated category color. Existing native highlights keep their original color, while margin labels use the current category color.
+
+Delete category (`删除分类`) hides the category’s buttons, margin labels, and drafts while preserving existing native highlights, comments, and association records. Adding the same identifier again restores the association. This differs from Remove annotation (`移除标注`) on an annotation card.
+
+The advanced editor under Settings → Category configuration (`设置 → 分类配置`) remains available for importing, exporting, and restoring default categories.
 
 </details>
 
@@ -81,7 +116,7 @@ Write a comment in an annotation card. Clicking outside the field ends editing a
 
 Click Export notes (`导出笔记`) to create a Markdown file named `阅读笔记-<paper title>.md`:
 
-- Passages are grouped under Motivation, Problem, Insight, Solution, Results, and Limitation.
+- Passages are grouped by each category’s Note heading (`笔记标题`). Defaults are Motivation, Problem, Insight, Solution, Results, and Limitation; custom headings are supported.
 - Page references follow the original text, for example `Original passage ——p2`.
 - Your comments are exported with their corresponding passages.
 - Enable Export translations (`导出译文`) to include all generated translations, or choose translations from specific cards.
@@ -92,7 +127,7 @@ Export includes translations that have already been generated. It does not make 
 
 ## Installation
 
-Current version: **1.0.11**. The plugin manifest supports **Zotero 10.0.7 and later releases in the 10.0.x series**. Tested on macOS with Zotero 10.0.7; other platforms have not been verified.
+Current version: **1.0.12**. The plugin manifest supports **Zotero 10.0.7 and later releases in the 10.0.x series**. Tested on macOS with Zotero 10.0.7; other platforms have not been verified.
 
 1. Download a published `.xpi` from [Releases](https://github.com/panhh0804/folio-zotero/releases). If no release package is available yet, build from source using the instructions below.
 2. In Zotero, open **Tools → Plugins**.
@@ -110,7 +145,7 @@ cd folio-zotero
 npm run verify
 ```
 
-The installation package is written to `dist/Folio-1.0.11.xpi`. Run `npm run package:source` if you also need a source ZIP.
+The installation package is written to `dist/Folio-1.0.12.xpi`. Run `npm run package:source` if you also need a source ZIP.
 
 </details>
 
