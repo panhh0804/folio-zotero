@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Folio",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Read the argument. AI and manual semantic highlights with margin labels.",
   "author": "Haohao Pan",
   "applications": {

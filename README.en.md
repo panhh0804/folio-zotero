@@ -5,7 +5,7 @@
 <p align="center"><strong>Give your highlights meaning. Turn your reading into structured notes.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/panhh0804/folio-zotero/releases"><img src="https://img.shields.io/badge/version-1.0.12-4263eb" alt="Version 1.0.12"></a>
+  <a href="https://github.com/panhh0804/folio-zotero/releases"><img src="https://img.shields.io/badge/version-1.0.13-4263eb" alt="Version 1.0.13"></a>
   <img src="https://img.shields.io/badge/Zotero-10.0.7%2B-CC2936" alt="Zotero 10.0.7 and later in the 10.0 series">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="Apache 2.0"></a>
 </p>
@@ -129,7 +129,7 @@ Export includes translations that have already been generated. It does not make 
 
 ## Installation
 
-Current version: **1.0.12**. The plugin manifest supports **Zotero 10.0.7 and later releases in the 10.0.x series**. Tested on macOS with Zotero 10.0.7; other platforms have not been verified.
+Current version: **1.0.13**. The plugin manifest supports **Zotero 10.0.7 and later releases in the 10.0.x series**. Tested on macOS with Zotero 10.0.7; other platforms have not been verified.
 
 1. Download a published `.xpi` from [Releases](https://github.com/panhh0804/folio-zotero/releases). If no release package is available yet, build from source using the instructions below.
 2. In Zotero, open **Tools → Plugins**.
@@ -147,7 +147,7 @@ cd folio-zotero
 npm run verify
 ```
 
-The installation package is written to `dist/Folio-1.0.12.xpi`. Run `npm run package:source` if you also need a source ZIP.
+The installation package is written to `dist/Folio-1.0.13.xpi`. Run `npm run package:source` if you also need a source ZIP.
 
 </details>
 

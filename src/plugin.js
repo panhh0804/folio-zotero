@@ -1,7 +1,7 @@
 var FolioPlugin = (() => {
   const ID='folio@folio.local', PREF='extensions.folio.';
   let rootURI, cssText, observer, interval, stopped=false;
-  const sessions=new Map(), panelVisibility=new Map(), handlers=[],pendingNotifications=new Set();
+  const sessions=new Map(), panelVisibility=new Map(), handlers=[],pendingNotifications=new Set(),selectionMenus=new Set();
   const credentialCache=new Map(), knownCredentials=new Set();
   const credentialOrigin='chrome://folio';
   function readPref(key,fallback){try {const v=Zotero.Prefs.get(PREF+key,true);return v?JSON.parse(v):fallback;}catch{return fallback;}}
@@ -140,6 +140,20 @@ var FolioPlugin = (() => {
     }).filter(Boolean);
   }
   function refresh(s){const next=nativeAnnotations(s);if(JSON.stringify(next)!==JSON.stringify(s.native)){s.native=next;s.panel?.refresh();}overlay(s);}
+  function refreshCategoryUI(s){
+    // The preference and every session's data are committed before touching DOM.
+    // One unloaded reader/page must not turn a successful save into a UI failure.
+    for(const update of [()=>{s.native=nativeAnnotations(s);},()=>s.panel?.refresh(),()=>overlay(s)]){
+      try{update();}catch(e){if(!/dead object/i.test(String(e)))Zotero.logError(e);}
+    }
+  }
+  async function configureCategories(values){
+    if([...sessions.values()].some(s=>s.busy||s.saving||s.removing))throw Error('请等待分析或标注操作完成后再修改分类');
+    const cats=FolioCore.categories(values);pref('categories',cats);
+    const current=[...sessions.values()];for(const s of current)s.categories=cats;
+    for(const s of current)refreshCategoryUI(s);
+    refreshSelectionMenus(cats);
+  }
   function syncSelection(s){
     const internal=s.reader._internalReader,state=internal?._state;
     const popup=state?.[internal?._lastViewPrimary===false?'secondaryViewSelectionPopup':'primaryViewSelectionPopup'];
@@ -188,7 +202,7 @@ var FolioPlugin = (() => {
       config:(c,key)=>configure(s,c,key),
       clearKey:async()=>{await storeKey(s.config,'');for(const current of sessions.values())if(credentialRealm(current.config)===credentialRealm(s.config))current.hasAPIKey=false;},
       testModel:async()=>{const result=await request(s,[{role:'system',content:'Return only JSON: {"ok":true}.'},{role:'user',content:'Test the connection. Return JSON.'}]);if(result.ok!==true)throw Error('接口已响应，但未返回预期的 JSON，请检查模型配置');message(s,'连接成功');},
-      categories:async values=>{if([...sessions.values()].some(other=>other.busy||other.saving||other.removing))throw Error('请等待分析或标注操作完成后再修改分类');const cats=FolioCore.categories(values);pref('categories',cats);for(const other of sessions.values()){other.categories=cats;refresh(other);other.panel?.refresh();}},
+      categories:configureCategories,
       export:options=>exportNotes(s,options),exportCategories:()=>saveFile(s,'folio-categories.json',JSON.stringify(s.categories,null,2))
     };
     s.panel=FolioPanel.mount(doc,s,api,cssText);setPanelVisible(s,panelVisibility.get(s.itemID)??visible);watchSelection(s);refresh(s);return s;
@@ -210,22 +224,31 @@ var FolioPlugin = (() => {
     if(!params.annotation?.position?.rects?.length)return;
     let s=sessions.get(reader.itemID);
     const annotation=JSON.parse(JSON.stringify(params.annotation));
-    const categories=s?.categories||readPref('categories',FolioCore.defaults);
+    const categories=readPref('categories',s?.categories||FolioCore.defaults);
     if(s)s.selectionAnnotation=annotation;
     // Keep the native popup/translation path synchronous and minimal. Defer our
     // independent panel refresh until after the shared popup has rendered.
     setTimeout(()=>{
       if(stopped)return;
-      s=sessions.get(reader.itemID)||session(reader,doc,false);
-      syncSelection(s);s.panel?.refresh();
+      try{s=sessions.get(reader.itemID)||session(reader,doc,false);syncSelection(s);s.panel?.refresh();}catch(e){if(!/dead object/i.test(String(e)))Zotero.logError(e);}
     },150);
     if(s?.display.selectionMenu===false)return;
+    refreshSelectionMenus(categories);
     const wrap=doc.createElement('div');wrap.className='folio-selection';wrap.style.cssText='display:flex;flex-wrap:wrap;gap:4px;padding:6px;border-top:1px solid #eee';
+    const menu={reader,doc,wrap,annotation};renderSelectionMenu(menu,categories);append(wrap);selectionMenus.add(menu);
+  }
+  function renderSelectionMenu({reader,doc,wrap,annotation},categories){
+    wrap.replaceChildren();
     for(const c of categories){
       const b=doc.createElement('button');b.textContent=c.id;b.title=c.name+': '+c.definition;b.style.cssText='font:600 11px sans-serif;padding:5px 7px;border:0;border-radius:4px;cursor:pointer;color:white;text-shadow:0 1px 2px #0005;background:'+c.color;
-      b.onclick=async()=>{b.disabled=true;try{s=sessions.get(reader.itemID)||session(reader,doc,false);await annotateSelection(s,c.id,annotation);}catch(e){error(s,e);}finally{b.disabled=false;}};wrap.append(b);
+      b.onclick=async()=>{let s;b.disabled=true;try{s=sessions.get(reader.itemID)||session(reader,doc,false);await annotateSelection(s,c.id,annotation);}catch(e){if(s)error(s,e);else Zotero.logError(e);}finally{try{b.disabled=false;}catch{ /* Popup closed during save. */ }}};wrap.append(b);
     }
-    append(wrap);
+  }
+  function refreshSelectionMenus(cats){
+    for(const menu of selectionMenus){
+      try{if(!menu.wrap.isConnected){selectionMenus.delete(menu);continue;}renderSelectionMenu(menu,cats);}
+      catch(e){selectionMenus.delete(menu);if(!/dead object/i.test(String(e)))Zotero.logError(e);}
+    }
   }
   function context({reader,params,append}) {
     const cats=readPref('categories',FolioCore.defaults);
@@ -328,7 +351,11 @@ var FolioPlugin = (() => {
   function scheduleOverlay(s,win) {
     if(stopped||s.overlayFrame)return;
     // Chrome timers also run when a reader tab has no compositor frames.
-    s.overlayFrame=setTimeout(()=>{s.overlayFrame=0;if(!stopped)overlay(s);},16);
+    s.overlayFrame=setTimeout(()=>{s.overlayFrame=0;if(!stopped){try{overlay(s);}catch(e){if(!/dead object/i.test(String(e)))Zotero.logError(e);}}},16);
+  }
+  function discardLayer(s,page,layer){
+    try{layer.remove();}catch(e){if(!/dead object/i.test(String(e)))throw e;}
+    finally{s.layers.delete(layer);s.layerStates.delete(page);}
   }
   function overlay(s) {
     if(stopped)return;
@@ -337,6 +364,7 @@ var FolioPlugin = (() => {
     // Page labels represent all annotations, independently of selection or sidebar filters.
     const annotations=[...s.native,...s.drafts],activePages=new Set();
     for(const view of pdfViews(s.reader)){
+      try{
       const win=view._iframeWindow,app=win.PDFViewerApplication,doc=win.document;
       if(!s.busBindings.some(x=>x.bus===app.eventBus)){
         const fn=()=>scheduleOverlay(s,win);
@@ -371,8 +399,10 @@ var FolioPlugin = (() => {
         const scale=page.viewport.scale||1;
         const signature=JSON.stringify([s.display,scale,located.map(({a,c,rs})=>[a.annotationID,a.category,a.status,a.text,c.name,c.label,c.color,rs])]);
         const previous=s.layerStates.get(page.div);
-        if(previous?.signature===signature&&previous.layer.parentNode===page.div)continue;
-        if(previous){previous.layer.remove();s.layers.delete(previous.layer);}
+        if(previous){
+          let unchanged=false;try{unchanged=previous.signature===signature&&previous.layer.parentNode===page.div;}catch(e){if(!/dead object/i.test(String(e)))throw e;}
+          if(unchanged)continue;discardLayer(s,page.div,previous.layer);
+        }
         const layer=doc.createElement('div');layer.className='folio-overlay';
         layer.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:6;overflow:visible';
         let bottom=-100;
@@ -392,9 +422,10 @@ var FolioPlugin = (() => {
         }
         page.div.append(layer);s.layers.add(layer);s.layerStates.set(page.div,{layer,signature});
       }
+      }catch(e){if(!/dead object/i.test(String(e)))throw e;}
     }
     for(const [page,{layer}] of s.layerStates){
-      if(!activePages.has(page)){layer.remove();s.layers.delete(layer);s.layerStates.delete(page);}
+      if(!activePages.has(page))discardLayer(s,page,layer);
     }
   }
   async function saveFile(s,name,contents) {
@@ -420,6 +451,7 @@ var FolioPlugin = (() => {
     if(s.overlayFrame)clearTimeout(s.overlayFrame);s.overlayFrame=0;
     cleanup(()=>s.panel?.destroy());for(const l of s.layers)cleanup(()=>l.remove());
     for(const {bus,name,fn} of s.busBindings)cleanup(()=>bus.off(name,fn));
+    for(const menu of selectionMenus)if(menu.reader===s.reader)selectionMenus.delete(menu);
   }
   function removeOwnedUI(){
     for(const reader of Zotero.Reader._readers||[]){
@@ -480,7 +512,7 @@ var FolioPlugin = (() => {
     if(interval)cleanup(()=>Zotero.getMainWindow()?.clearInterval(interval));interval=null;
     if(observer)cleanup(()=>Zotero.Notifier.unregisterObserver(observer));observer=null;
     for(const [name,fn] of handlers)cleanup(()=>Zotero.Reader.unregisterEventListener(name,fn));handlers.length=0;
-    for(const s of sessions.values())cleanup(()=>destroy(s));sessions.clear();credentialCache.clear();knownCredentials.clear();cleanup(removeOwnedUI);
+    for(const s of sessions.values())cleanup(()=>destroy(s));sessions.clear();selectionMenus.clear();credentialCache.clear();knownCredentials.clear();cleanup(removeOwnedUI);
   }
   return {start,stop,configURL,_test:{session,save,apply,overlay,analyze,nativeAnnotations,maintainReaders,setPanelVisible,exportMarkdown,configure,loadKey,storeKey,request,removalTargets,removeAnnotations,canRestore,restoreAnnotations,syncSelection,selection}};
 })();

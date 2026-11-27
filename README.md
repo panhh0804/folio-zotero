@@ -5,7 +5,7 @@
 <p align="center"><strong>给论文高亮加上语义，把阅读整理成笔记。</strong></p>
 
 <p align="center">
-  <a href="https://github.com/panhh0804/folio-zotero/releases"><img src="https://img.shields.io/badge/version-1.0.12-4263eb" alt="Version 1.0.12"></a>
+  <a href="https://github.com/panhh0804/folio-zotero/releases"><img src="https://img.shields.io/badge/version-1.0.13-4263eb" alt="Version 1.0.13"></a>
   <img src="https://img.shields.io/badge/Zotero-10.0.7%2B-CC2936" alt="Zotero 10.0.7 and later in the 10.0 series">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="Apache 2.0"></a>
 </p>
@@ -129,7 +129,7 @@ Folio 是一款 Zotero 语义标注插件。在 PDF 阅读器中，为关键句�
 
 ## 安装
 
-当前版本 **1.0.12**，支持清单范围为 **Zotero 10.0.7 及以上的 10.0.x 版本**。已测试环境为 macOS / Zotero 10.0.7；其他平台尚未验证。
+当前版本 **1.0.13**，支持清单范围为 **Zotero 10.0.7 及以上的 10.0.x 版本**。已测试环境为 macOS / Zotero 10.0.7；其他平台尚未验证。
 
 1. 从 [Releases](https://github.com/panhh0804/folio-zotero/releases) 获取已发布的 `.xpi` 安装包。若尚未提供发布包，可按下方步骤从源码构建。
 2. 在 Zotero 中打开「工具 → 插件」。
@@ -147,7 +147,7 @@ cd folio-zotero
 npm run verify
 ```
 
-安装包位于 `dist/Folio-1.0.12.xpi`。如需源码 ZIP，运行 `npm run package:source`。
+安装包位于 `dist/Folio-1.0.13.xpi`。如需源码 ZIP，运行 `npm run package:source`。
 
 </details>
 

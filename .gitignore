@@ -43,6 +43,7 @@ venv/
 *.7z
 
 # Personal research documents and exports
+docs/Zotero_Semantic_Annotation_Design.md
 *.pdf
 *.docx
 *.pptx

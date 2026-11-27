@@ -59,6 +59,49 @@ test('category edits persist globally, refresh open panels, survive restart, and
  env.P.stop();await env.P.start('file:///fixture/');const reopened=env.P._test.session(h.reader,{},false);assert.equal(reopened.categories[0].name,'Research value');assert.equal(reopened.categories[0].color,'#38A6BC');env.P.stop();
 });
 
+test('a dead reader and dead PDF layers cannot interrupt category saves or leave another reader on old categories',async()=>{
+ const env=pluginEnv(),h=attachNotifierHarness(env);credentialHarness(env);const actions=new Map(),refreshes=new Map();
+ env.context.FolioPanel.mount=(_doc,s,api)=>{actions.set(s.itemID,api);return {root:{isConnected:true,hidden:true},render(){},refresh(){refreshes.set(s.itemID,(refreshes.get(s.itemID)||0)+1);},attach(){},destroy(){}};};
+ await env.P.start('file:///fixture/');const first=env.P._test.session(h.reader,{},false);
+ const stale=env.P._test.session({itemID:6,_iframeWindow:{document:{}}},{},false);
+ const last=env.P._test.session({itemID:7,_iframeWindow:{document:{}}},{},false);
+ const custom={id:'TAG1',label:'自定义标注',name:'Custom',color:'#7B61A8',definition:'Custom evidence'};
+ await actions.get(5).categories([...C.defaults,custom]);
+ stale.panel.refresh=()=>{throw Error("can't access dead object");};
+ const deadLayer={remove(){throw Error("can't access dead object");}};first.layerStates=new Map([[{}, {layer:deadLayer}]]);first.layers.add(deadLayer);
+ const changed=C.defaults.map(c=>c.id==='INSG'?{...c,color:'#9FE1E3'}:{...c});const before=refreshes.get(7);
+ await assert.doesNotReject(actions.get(5).categories(changed));
+ for(const s of [first,last]){assert.equal(s.categories.some(c=>c.id==='TAG1'),false);assert.equal(s.categories.find(c=>c.id==='INSG').color,'#9FE1E3');}
+ assert.ok(refreshes.get(7)>before);assert.equal(first.layerStates.size,0);assert.equal(first.layers.has(deadLayer),false);
+ const stored=JSON.parse(env.context.Zotero.Prefs.get('extensions.folio.categories'));assert.equal(stored.some(c=>c.id==='TAG1'),false);assert.equal(stored.find(c=>c.id==='INSG').color,'#9FE1E3');env.P.stop();
+});
+
+function categoryDOM(){
+ class Node{constructor(){this.children=[];this.style={};this.isConnected=false;}append(child){this.children.push(child);child.parentNode=this;child.isConnected=this.isConnected;}replaceChildren(){this.children=[];}setAttribute(){}remove(){this.isConnected=false;}}
+ const doc={body:new Node(),createElement:()=>new Node(),getElementById:()=>null};doc.body.isConnected=true;return {doc,Node};
+}
+test('saving categories updates an already-open selection popup and ignores destroyed popup documents',async()=>{
+ const env=pluginEnv(),h=attachNotifierHarness(env);credentialHarness(env);let api;
+ env.context.FolioPanel.mount=(_doc,_s,actions)=>{api=actions;return {root:{isConnected:true,hidden:true},render(){},refresh(){},attach(){},destroy(){}};};
+ await env.P.start('file:///fixture/');env.P._test.session(h.reader,{},false);
+ await api.categories([...C.defaults,{id:'TAG1',name:'Custom',label:'Custom',color:'#7B61A8',definition:'Custom'}]);
+ const {doc}=categoryDOM(),popups=[];const event={reader:h.reader,doc,params:{annotation:{text:'Selected passage for classification.',position:{pageIndex:0,rects:[[1,2,3,4]]}}},append:wrap=>{wrap.isConnected=true;popups.push(wrap);}};
+ env.P._test.selection(event);const dead=popups[0];Object.defineProperty(dead,'isConnected',{get(){throw Error("can't access dead object");}});
+ env.P._test.selection(event);const popup=popups[1];assert.ok(popup.children.some(b=>b.textContent==='TAG1'));
+ const changed=C.defaults.map(c=>c.id==='INSG'?{...c,color:'#9FE1E3'}:{...c});await api.categories(changed);
+ assert.equal(popup.children.length,6);assert.equal(popup.children.some(b=>b.textContent==='TAG1'),false);assert.ok(popup.children.find(b=>b.textContent==='INSG').style.cssText.includes('#9FE1E3'));
+ env.P._test.selection(event);assert.equal(popups[2].children.length,6);assert.ok(popups[2].children.find(b=>b.textContent==='INSG').style.cssText.includes('#9FE1E3'));env.P.stop();
+});
+test('an active PDF page rebuilds a dead cached layer with the updated category color',()=>{
+ const env=pluginEnv(),{doc,Node}=categoryDOM();env.context.Cu={cloneInto:x=>x};
+ const page=new Node();page.isConnected=true;const deadLayer={remove(){throw Error("can't access dead object");}};
+ const app={eventBus:{on(){}},pdfViewer:{getPageView:()=>({div:page,viewport:{scale:1,convertToViewportRectangle:r=>r}})}};
+ const reader={_internalReader:{_primaryView:{_iframeWindow:{document:doc,PDFViewerApplication:app,MutationObserver:class{observe(){}}}}}};
+ const s={reader,categories:C.defaults.map(c=>c.id==='INSG'?{...c,color:'#9FE1E3'}:{...c}),display:{labels:true},native:[{annotationID:'INSG-test',category:'INSG',text:'Original insight.',position:{pageIndex:0,rects:[[10,20,30,40]]}}],drafts:[],busBindings:[],layers:new Set([deadLayer]),layerStates:new Map([[page,{layer:deadLayer,signature:'old'}]])};
+ assert.doesNotThrow(()=>env.P._test.overlay(s));assert.equal(s.layers.has(deadLayer),false);assert.equal(page.children.length,1);
+ const badge=page.children[0].children[0];assert.equal(badge.textContent,'INSG');assert.ok(badge.style.cssText.includes('159,225,227'));assert.equal(s.layerStates.get(page).layer,page.children[0]);
+});
+
 test('deleting a saved category preserves native highlights, comments and tags, and re-adding its ID restores association',async()=>{
  const env=pluginEnv(),h=attachNotifierHarness(env);credentialHarness(env);let api;
  env.context.FolioPanel.mount=(_doc,_s,actions)=>{api=actions;return {root:{isConnected:true,hidden:true},render(){},refresh(){},attach(){},destroy(){}};};
